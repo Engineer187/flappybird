@@ -1,0 +1,98 @@
+import pygame
+import random
+WIDTH=864
+LENGTH=800
+NAME="flappy bird"
+screen=pygame.display.set_mode((WIDTH,LENGTH))
+pygame.display.set_caption(NAME)
+RUN=True
+gameover=False
+fly=False
+bg=pygame.image.load("images\\gb flappybird.png")
+bg=pygame.transform.scale(bg,(864,700))
+floor=pygame.image.load("images\\ground.png")
+birdg=pygame.image.load("images\\bird glide.png")
+birdu=pygame.image.load("images\\bird wing up.png")
+birdd=pygame.image.load("images\\bird wing down.png")
+pipe=pygame.image.load("images\\pipe.png")
+floorx=0
+class Bird(pygame.sprite.Sprite):
+    def __init__(self,x,y,image):
+        super().__init__()
+        self.list_image=[birdd,birdg,birdu]
+        self.index=0
+        self.counter=0
+        self.image = self.list_image[self.index]
+        self.rect=self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y 
+        self.velocity=0
+    def update(self):
+        self.counter=self.counter+1
+        if self.counter==20 :
+            self.index=self.index+1
+            if self.index>2:
+                self.index=self.index-3
+            self.image = self.list_image[self.index]
+            self.counter=0
+        if fly == True:
+            keypresed=pygame.key.get_pressed()
+            if keypresed[pygame.K_SPACE]:
+                self.velocity=-5
+            if self.velocity <3:
+                self.velocity=self.velocity+1
+            self.rect.y=self.rect.y+self.velocity
+bird_sprites=pygame.sprite.Group()
+bird=Bird(100,200,birdu)
+bird_sprites.add(bird)
+
+class Pipe(pygame.sprite.Sprite):
+    def __init__(self,x,y,image,pos):
+        super().__init__()
+        self.image=image
+        self.rect=self.image.get_rect()
+        if pos==1:
+            self.rect.topleft=(x,y)
+        else:
+            self.image=pygame.transform.flip(self.image,True,False)
+            self.rect.bottomleft=(x,y)
+    def update(self):
+        self.rect.x = self.rect.x-1
+        if self.rect.right < -36:
+            self.kill()
+pipes=pygame.sprite.Group()
+freq=5000
+last_pipe=pygame.time.get_ticks()-freq
+while RUN==True :
+    if fly==True:
+        bird.update()
+        floorx=floorx-1
+        if pygame.time.get_ticks()-last_pipe>freq:
+            current_time=pygame.time.get_ticks()
+            r = random.randint(-100,100)
+            topp=Pipe(100,350-r-100,pipe,2)
+            bottomp=Pipe(100,350-r+100,pipe,1)
+            pipes.add(topp)
+            pipes.add(bottomp)
+            last_pipe = current_time
+    if floorx < -36:
+        floorx=0
+    screen.blit(bg,(0,0))
+    pipes.draw(screen)
+    pipes.update()
+    screen.blit(floor,(floorx,700))
+    bird_sprites.draw(screen)
+    if bird.rect.y>660:
+        fly=False
+        gameover=True
+    for event in pygame.event.get():
+        if event.type==pygame.QUIT:
+            RUN=False
+        if event.type==pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and gameover==False and fly==False:
+                fly=True
+    pygame.display.update()
+
+
+
+
