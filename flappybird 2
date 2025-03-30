@@ -5,9 +5,12 @@ LENGTH=800
 NAME="flappy bird"
 screen=pygame.display.set_mode((WIDTH,LENGTH))
 pygame.display.set_caption(NAME)
+pygame.init()
 RUN=True
 gameover=False
 fly=False
+passpipe=False
+score=0
 bg=pygame.image.load("images\\gb flappybird.png")
 bg=pygame.transform.scale(bg,(864,700))
 floor=pygame.image.load("images\\ground.png")
@@ -37,7 +40,7 @@ class Bird(pygame.sprite.Sprite):
             self.counter=0
         if fly == True:
             keypresed=pygame.key.get_pressed()
-            if keypresed[pygame.K_SPACE]:
+            if keypresed[pygame.K_SPACE]and gameover == False:
                 self.velocity=-5
             if self.velocity <3:
                 self.velocity=self.velocity+1
@@ -54,24 +57,35 @@ class Pipe(pygame.sprite.Sprite):
         if pos==1:
             self.rect.topleft=(x,y)
         else:
-            self.image=pygame.transform.flip(self.image,True,False)
+            self.image=pygame.transform.flip(self.image,False,True)
             self.rect.bottomleft=(x,y)
     def update(self):
         self.rect.x = self.rect.x-1
         if self.rect.right < -36:
             self.kill()
 pipes=pygame.sprite.Group()
-freq=5000
+freq=3000
 last_pipe=pygame.time.get_ticks()-freq
 while RUN==True :
+    if pygame.sprite.groupcollide(bird_sprites,pipes,False,False):
+        gameover = True
+    if len(pipes)>0:
+        if pipes.sprites()[0].rect.left<bird.rect.left:
+            if pipes.sprites()[0].rect.right>bird.rect.right:
+                passpipe=True
+        if pipes.sprites()[0].rect.right<bird.rect.right and passpipe==True:
+            passpipe=False
+            score=score+1
+    if gameover==False and fly == True :
+        pipes.update()
+        floorx=floorx-1
     if fly==True:
         bird.update()
-        floorx=floorx-1
-        if pygame.time.get_ticks()-last_pipe>freq:
-            current_time=pygame.time.get_ticks()
-            r = random.randint(-100,100)
-            topp=Pipe(100,350-r-100,pipe,2)
-            bottomp=Pipe(100,350-r+100,pipe,1)
+        current_time=pygame.time.get_ticks()
+        if current_time-last_pipe>freq:
+            r = random.randint(-200,200)
+            topp=Pipe(1000,350-r-100,pipe,2)
+            bottomp=Pipe(1000,350-r+100,pipe,1)
             pipes.add(topp)
             pipes.add(bottomp)
             last_pipe = current_time
@@ -79,9 +93,11 @@ while RUN==True :
         floorx=0
     screen.blit(bg,(0,0))
     pipes.draw(screen)
-    pipes.update()
     screen.blit(floor,(floorx,700))
     bird_sprites.draw(screen)
+    font=pygame.font.SysFont("times new roman",50)
+    font1=font.render("score:"+str(score),True,"black")
+    screen.blit(font1,(0,0))
     if bird.rect.y>660:
         fly=False
         gameover=True
@@ -91,6 +107,10 @@ while RUN==True :
         if event.type==pygame.KEYDOWN:
             if event.key == pygame.K_SPACE and gameover==False and fly==False:
                 fly=True
+    if gameover==True :
+        font=pygame.font.SysFont("times new roman",100)
+        font1=font.render("GAME OVER",True,"black")
+        screen.blit(font1,(100,300))
     pygame.display.update()
 
 
